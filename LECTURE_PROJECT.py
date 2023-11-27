@@ -1,77 +1,63 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 18 14:54:19 2023
+Created on Wed Oct 25 14:39:05 2023
 
-@author: n.l.smith
+@author: brand
 """
 
-
-import pandas as pd
-import matplotlib.pyplot as mbl
 from plotnine import *
+import pandas as pd
 import os
 
-
-os.chdir('/Users/n.l.smith/Desktop/2450 Python')
-
-dat = pd.read_csv("2017_Fuel_Economy_Data.csv")
-
-dat = dat['Combined Mileage (mpg)']
-
-n = len(dat)
-
-# df = pd.DataFrame({"handspan": [20, 20, 19, 24,2, 20, 20.2, 21.5, 
-#                                        17, 19.5, 21.5, 18,
-#                                        18, 20.5, 20.3, 21.5, 19, 20.4, 
-#                                        22.7, 22.9, 17, 23, 
-#                                        23.8, 22, 21.5,21.5 ]})
+os.chdir("C:/Users/brand/Downloads")
 
 
-#parameter = 'mean' or 'median' or 'std'
 
+data = pd.DataFrame({"handspan": [17,18,19,20,20,20,22,25]})
 
-parameter = 'mean'
-
-statList = []
-
-for i in range(1,10_001):
-
-    randSamp = dat.sample(n, replace = True) 
+class bootstrap(object):
     
-    if parameter == 'mean' or 'median' or 'std':
-        if parameter == 'std':
-            randStanDev = randSamp.std()
-            statList.append(float(randStanDev))
+    def __init__(self, n = 0, dat = None):
+        self._n = n
+        self._stat = 'mean'
+        self._data = dat
+        self._booted = None
+        self._cl = 0.95
+        
+    def set_n(self, n):
+        self._n = n
+        
+    def boot_data_frame(self, type_stat):
+        boot_means = []
+        
+        stat = type_stat.lower()
+        self._stat = stat
+        
+        for i in range(self._n):
+            boot_sample = self._data.sample(8, replace = True)
             
-        if parameter == 'mean':
-            randMean = randSamp.mean()
-            statList.append(float(randMean))
-        
-        if parameter == 'median':
-            randMedian = randSamp.median()
-            statList.append(float(randMedian))
-        
-    else: 
-        raise TypeError("That is not an accepted function")
-      
+            if self._stat == "mean":
+                boot_means.append(float(boot_sample.mean()))
+            elif self._stat == "median":
+                boot_means.append(float(boot_sample.median()))
+            elif self._stat == "std":
+                boot_means.append(float(boot_sample.std()))
+            else:
+                raise TypeError("invalid input")
+                break
+            
+        self._booted = pd.DataFrame({"handspan means": boot_means})
 
-#mbl.hist(xbarList)
+#%%
 
-#mbl.xlabel("handspan", "kwargs")
+x = bootstrap(1000, data)
 
-#mbl.ylabel("observations")
+x.boot_data_frame("mean")
+x.graph()
 
-#mbl.show()
 
 
-xbarDF = pd.DataFrame({'x': statList})
 
-(
- ggplot(xbarDF, aes( x = 'x')) +
- geom_histogram(size = 3)
-
-)
 
 
 
