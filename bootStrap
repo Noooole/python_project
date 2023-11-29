@@ -1,1 +1,117 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#"""
+#Created on Wed Oct 18 14:54:19 2023
 
+#@author: n.l.smith
+#"""
+
+from plotnine import *
+import pandas as pd
+import os
+import numpy
+
+os.chdir("/Users/n.l.smith/Desktop/2450 Python")
+dat_file = pd.read_csv("2017_Fuel_Economy_Data.csv")
+dat = dat_file["Combined Mileage (mpg)"]
+
+#data = pd.DataFrame({"handspan": [17,18,19,20,20,20,22,25]})
+
+class bootstrap(object):
+    
+    def __init__(self, sims = 0, dat = None):
+        self._sims = sims
+        self._stat = None
+        self._data = dat
+        self._n = len(dat)
+        self._booted = None
+        self._cl = None
+        self._save = []
+        
+    def set_sims(self, sims):
+        self._sims = sims
+        
+    def boot_data_frame(self, type_stat):
+        boot_means = []
+#n is how many times sampling
+        stat = type_stat.lower()
+        self._stat = stat
+        
+        for i in range(self._sims):
+            boot_sample = self._data.sample(self._n, replace = True)
+            
+            if self._stat == "mean":
+                boot_means.append(float(boot_sample.mean()))
+                
+            elif self._stat == "median":
+                boot_means.append(float(boot_sample.median()))
+                
+            elif self._stat == "std":
+                boot_means.append(float(boot_sample.std()))
+                
+            else:
+                raise TypeError("invalid input")
+                break
+            
+        self._booted = pd.DataFrame({"stats_boot": boot_means})
+        
+        return self._booted
+    
+    def load_data(self, dat):
+        self._data = dat
+        self._n = len(dat)
+        
+    def reset_data(self):
+        self._save = []
+        
+    def save_data(self):
+        self.reset_data()
+        self._save.append(self._booted)
+        print("Your boot strap data has been saved")
+        
+    def type_stat(self, stat):
+        if stat == 'mean' or 'meadian' or 'std':
+            self._stat = stat
+            self.reset_data()
+            print(f"the stat has been changed to {self._stat} and the saved data has been reset")
+        else:
+            print('That is an invalid stat choice, please enter either mean or'
+                  + ' meadian or std')
+   
+    def plot_boot(self):
+        
+        plot = (
+            ggplot(self._save[0], aes(x = 'stats_boot')) + 
+            geom_histogram()
+            )
+        
+        return plot
+    
+    def conf_interval(self, alpha):
+        
+        if alpha != 0 and alpha <= 1:
+            ci_interval = numpy.percentile(self._save,[(0+alpha/2), 1-(alpha/2)])
+            return ci_interval
+        else:
+            print('no, that is not an acceptable alpha value (0,1)')
+            
+        
+            
+        
+        
+            
+            
+            
+        
+
+#%%
+
+x = bootstrap(1000, dat)
+
+x.boot_data_frame("mean")
+
+x.save_data()
+
+x.plot_boot()
+
+x.conf_interval(0.05)
